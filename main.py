@@ -149,9 +149,25 @@ class ImageTransfer():
         self.folder = os.path.abspath(folder) if folder else None
 
     def exists(self):
+        """
+        Check if the specified working directory exists.
+
+        Returns:
+        - bool: True if the directory exists, False otherwise.
+        """
         return os.path.isdir(self.PATH)
 
     def convert_image_shortcuts(self, img_dir=os.getcwd(), type_priority:list=None):
+        """
+        Convert image files in the specified directory to shortcuts, prioritizing specified file types.
+
+        Parameters:
+        - img_dir (str): The directory to scan for image files. Defaults to the current working directory.
+        - type_priority (list of str): List of image file extensions in order of priority. Defaults to ["NEF", "TIF", "TIFF", "JPG", "JPEG"].
+
+        Returns:
+        - bool: False if the target folder is not set or does not exist, True otherwise.
+        """
         if type_priority is None:
             type_priority = ["NEF", "TIF", "TIFF", "JPG", "JPEG"]
         if not self.folder:
