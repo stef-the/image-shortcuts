@@ -75,14 +75,17 @@ def create_shortcut_windows(source_file, shortcut_location):
     :param source_file: The path to the original file.
     :param shortcut_location: The path where the shortcut should be created.
     """
-    import pythoncom
-    from win32com.shell import shell
-    shortcut = pythoncom.CoCreateInstance(
-        shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
-    shortcut.SetPath(source_file)
-    shortcut.SetWorkingDirectory(os.path.dirname(source_file))
-    persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
-    persist_file.Save(shortcut_location, 0)
+    try:
+        import pythoncom # type: ignore
+        from win32com.shell import shell # type: ignore
+        shortcut = pythoncom.CoCreateInstance(
+            shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
+        shortcut.SetPath(source_file)
+        shortcut.SetWorkingDirectory(os.path.dirname(source_file))
+        persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
+        persist_file.Save(shortcut_location, 0)
+    except ImportError:
+        print("IMPORT ERROR: This function is not available on this platform.")
 
 def create_shortcut(source_file, alias_location):
     """
@@ -135,7 +138,7 @@ class ImageTransfer():
     It supports both Windows and macOS systems.
 
     Attributes:
-        - PATH: The absolute path to the working directory.
+        - path: The absolute path to the working directory.
         - folder: The absolute path to the folder where shortcuts will be created.
 
     Usage:
@@ -145,7 +148,7 @@ class ImageTransfer():
           in the specified directory, prioritizing specified file types.
     """
     def __init__(self, path=os.getcwd(), folder=None):
-        self.PATH = os.path.abspath(path)
+        self.path = os.path.abspath(path)
         self.folder = os.path.abspath(folder) if folder else None
 
     def exists(self):
@@ -155,7 +158,7 @@ class ImageTransfer():
         Returns:
         - bool: True if the directory exists, False otherwise.
         """
-        return os.path.isdir(self.PATH)
+        return os.path.isdir(self.path)
 
     def convert_image_shortcuts(self, img_dir=None, type_priority:list=None):
         """
@@ -178,7 +181,7 @@ class ImageTransfer():
         if not self.folder:
             return False
         if not img_dir:
-            img_dir = self.PATH
+            img_dir = self.path
 
         img_dir = os.path.abspath(img_dir)
         scanned_folder = scan_folder(img_dir, recursive=True)
@@ -216,9 +219,9 @@ class ImageTransfer():
                     create_shortcut(shortcut_source, os.path.join(self.folder, new_file_name))
 
 if __name__ == "__main__":
-    input_folder = "" # Input/Shortcut folder PATH e.g. "./Images_(Copy)/"
-    reference_folder = "" # Reference/Source folder PATH e.g. "./Images/"
+    INPUT_FOLDER = "" # Input/Shortcut folder path e.g. "./Images_(Copy)/"
+    REFERENCE_FOLDER = "" # Reference/Source folder path e.g. "./Images/"
 
-    cs0 = ImageTransfer(folder=input_folder)
+    cs0 = ImageTransfer(folder=INPUT_FOLDER)
     print(cs0.exists())
-    cs0.convert_image_shortcuts(img_dir=reference_folder)
+    cs0.convert_image_shortcuts(img_dir=REFERENCE_FOLDER)

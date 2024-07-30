@@ -29,5 +29,5 @@ if __name__ == "__main__":
     cs0.convert_image_shortcuts(img_dir=reference_folder)
 ```
 
-- `input_folder` is the folder in which files will be replaced with shortcuts, if possible. This can be a relative or absolute PATH.
-- `reference_folder` is the reference folder from which source files will be pulled for the shortcuts. This can also be a relative or absolute PATH.
+- `INPUT_FOLDER` is the folder in which files will be replaced with shortcuts, if possible. This can be a relative or absolute PATH.
+- `REFERENCE_FOLDER` is the reference folder from which source files will be pulled for the shortcuts. This can also be a relative or absolute PATH.
