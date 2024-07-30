@@ -181,29 +181,25 @@ class ImageTransfer():
             img_dir = os.getcwd()
         if not self.folder:
             return False
-        if not img_dir:
-            img_dir = self.path
 
         img_dir = os.path.abspath(img_dir)
-        scanned_folder = scan_folder(img_dir, recursive=True)
         priority_map = {ext: idx for idx, ext in enumerate(type_priority)}
-        processed_scanned_folder = {}
-        for file in scanned_folder:
+        process_scan_dir = {}
+        for file in scan_folder(img_dir, recursive=True):
             ext = file.split('.')[-1].upper()
             if ext in priority_map:
                 base_name = remove_extension(os.path.basename(file))
-                processed_sc_bname = processed_scanned_folder[base_name]
-                processed_order = priority_map[processed_sc_bname.split('.')[-1].upper()]
-                if base_name not in processed_scanned_folder or priority_map[ext] < processed_order:
-                    processed_scanned_folder[base_name] = file
+                processed_order = priority_map[process_scan_dir[base_name].split('.')[-1].upper()]
+                if base_name not in process_scan_dir or priority_map[ext] < processed_order:
+                    process_scan_dir[base_name] = file
         for file in scan_folder(self.folder, recursive=True):
             if file.endswith("DS_Store"):
                 continue
 
             processed_file = remove_extension(os.path.basename(file))
 
-            if processed_file in processed_scanned_folder:
-                matching_file = processed_scanned_folder[processed_file]
+            if processed_file in process_scan_dir:
+                matching_file = process_scan_dir[processed_file]
                 ext = matching_file.split('.')[-1].upper()
                 matching_files = [matching_file]
                 # Include .xmp file if it exists for .NEF files
@@ -218,6 +214,7 @@ class ImageTransfer():
                 for shortcut_source in matching_files:
                     new_file_name = f"{processed_file}.{shortcut_source.split('.')[-1]}"
                     create_shortcut(shortcut_source, os.path.join(self.folder, new_file_name))
+        return True
 
 if __name__ == "__main__":
     INPUT_FOLDER = "" # Input/Shortcut folder path e.g. "./Images_(Copy)/"
