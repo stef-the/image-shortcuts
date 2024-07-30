@@ -1,24 +1,28 @@
 """
-ImageTransfer is a class to manage the conversion of image files in a specified folder to shortcuts, linking to their 
-original files in another directory. It supports both Windows and macOS systems.
+ImageTransfer is a class to manage the conversion of image files in a specified folder to shortcuts, 
+linking to their original files in another directory. It supports both Windows and macOS systems.
 
 Methods:
-    - __init__(path, folder): Initializes the ImageTransfer object with the specified path and folder.
+    - __init__(path, folder): Initializes the ImageTransfer
+      object with the specified path and folder.
     - exists(): Checks if the specified path exists and is a directory.
-    - convert_image_shortcuts(img_dir, type_priority): Scans the specified directory for image files, finds corresponding
-      files in the reference directory based on priority, deletes existing files with the same base name, and creates 
+    - convert_image_shortcuts(img_dir, type_priority): Scans the specified directory for image
+      files, finds corresponding files in the reference directory based on priority,
+      deletes existing files with the same base name, and creates 
       shortcuts to the original files in the reference directory.
 
 Functions:
     - remove_extension(file_path): Removes the extension from a file path.
-    - create_alias_macos(source_file, alias_location): Creates an alias to a file on macOS using AppleScript.
-    - create_shortcut_windows(source_file, shortcut_location): Creates a shortcut to a file on Windows using Python's 
-      win32com.shell.
-    - create_shortcut(source_file, alias_location): Detects the operating system and creates a shortcut or alias 
-      accordingly.
-    - scan_folder(folder, recursive): Scans a folder for files, with an option to scan subfolders recursively.
-    - delete_files_with_same_basename(directory, base_name): Deletes all files in a directory that have the same base 
-      name.
+    - create_alias_macos(source_file, alias_location):
+      Creates an alias to a file on macOS using AppleScript.
+    - create_shortcut_windows(source_file, shortcut_location): Creates a shortcut to a file on
+      Windows using Python's win32com.shell.
+    - create_shortcut(source_file, alias_location): Detects the operating system and creates
+      a shortcut or alias accordingly.
+    - scan_folder(folder, recursive): Scans a folder for files,
+      with an option to scan subfolders recursively.
+    - delete_files_with_same_basename(directory, base_name): Deletes all files in a directory
+      that have the same base name.
 
 Example usage:
     input_folder = "./Images_(Copy)/"
@@ -50,11 +54,12 @@ def create_alias_macos(source_file, alias_location):
     """
     source_file_abs = os.path.abspath(source_file)
     alias_location_abs = os.path.abspath(alias_location)
-    
+    dname_source = os.path.dirname(alias_location_abs)
+    bname_source = os.path.basename(alias_location_abs)
     apple_script = f'''
     tell application "Finder"
-        make alias file to POSIX file "{source_file_abs}" at POSIX file "{os.path.dirname(alias_location_abs)}"
-        set name of result to "{os.path.basename(alias_location_abs)}"
+        make alias file to POSIX file "{source_file_abs}" at POSIX file "{dname_source}"
+        set name of result to "{bname_source}"
     end tell
     '''
     try:
@@ -71,7 +76,7 @@ def create_shortcut_windows(source_file, shortcut_location):
     :param shortcut_location: The path where the shortcut should be created.
     """
     import pythoncom
-    from win32com.shell import shell, shellcon
+    from win32com.shell import shell
     
     shortcut = pythoncom.CoCreateInstance(
         shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
@@ -89,7 +94,6 @@ def create_shortcut(source_file, alias_location):
     """
     if not os.path.exists(source_file):
         raise FileNotFoundError(f"The source file '{source_file}' does not exist.")
-    
     system = platform.system()
     if system == "Darwin":  # macOS
         create_alias_macos(source_file, alias_location)
@@ -126,6 +130,20 @@ def delete_files_with_same_basename(directory, base_name):
             os.remove(os.path.join(directory, file))
 
 class ImageTransfer():
+    """
+    ImageTransfer is a class for managing the conversion of image files in a specified folder to shortcuts,
+    linking to their original files in another directory. It supports both Windows and macOS systems.
+
+    Attributes:
+        - PATH: The absolute path to the working directory.
+        - folder: The absolute path to the folder where shortcuts will be created.
+
+    Usage:
+        - Initialize the ImageTransfer object with a specified working directory
+          and target folder for shortcuts.
+        - Use the convert_image_shortcuts method to create shortcuts for image files
+          in the specified directory, prioritizing specified file types.
+    """
     def __init__(self, path=os.getcwd(), folder=None):
         self.PATH = os.path.abspath(path)
         self.folder = os.path.abspath(folder) if folder else None
@@ -133,23 +151,25 @@ class ImageTransfer():
     def exists(self):
         return os.path.isdir(self.PATH)
 
-    def convert_image_shortcuts(self, img_dir=os.getcwd(), type_priority=["NEF", "TIF", "TIFF", "JPG", "JPEG"]):
+    def convert_image_shortcuts(self, img_dir=os.getcwd(), type_priority:list=None):
+        if type_priority is None:
+            type_priority = ["NEF", "TIF", "TIFF", "JPG", "JPEG"]
         if not self.folder:
             return False
         if not img_dir:
             img_dir = self.PATH
 
         img_dir = os.path.abspath(img_dir)
-        scanned_folder = scan_folder(img_dir, recursive=True)
-        
+        scanned_folder = scan_folder(img_dir, recursive=True)    
         priority_map = {ext: idx for idx, ext in enumerate(type_priority)}
-        processed_scanned_folder = {}
-        
+        processed_scanned_folder = {}     
         for file in scanned_folder:
             ext = file.split('.')[-1].upper()
             if ext in priority_map:
                 base_name = remove_extension(os.path.basename(file))
-                if base_name not in processed_scanned_folder or priority_map[ext] < priority_map[processed_scanned_folder[base_name].split('.')[-1].upper()]:
+                processed_sc_bname = processed_scanned_folder[base_name]
+                processed_order = priority_map[processed_sc_bname.split('.')[-1].upper()]
+                if base_name not in processed_scanned_folder or priority_map[ext] < processed_order:
                     processed_scanned_folder[base_name] = file
 
         for file in scan_folder(self.folder, recursive=True):
@@ -172,8 +192,7 @@ class ImageTransfer():
                 print(f"Matching files found for {file}: {matching_files}")
 
                 # Delete existing files with the same base name
-                delete_files_with_same_basename(self.folder, processed_file)
-                
+                delete_files_with_same_basename(self.folder, processed_file)              
                 # Create shortcuts for the new files
                 for shortcut_source in matching_files:
                     new_file_name = f"{processed_file}.{shortcut_source.split('.')[-1]}"
@@ -183,6 +202,6 @@ if __name__ == "__main__":
     input_folder = "" # Input/Shortcut folder PATH e.g. "./Images_(Copy)/"
     reference_folder = "" # Reference/Source folder PATH e.g. "./Images/"
 
-    cs0 = ImageTransfer(ile_type="pdf", folder=input_folder)
+    cs0 = ImageTransfer(folder=input_folder)
     print(cs0.exists())
     cs0.convert_image_shortcuts(img_dir=reference_folder)
