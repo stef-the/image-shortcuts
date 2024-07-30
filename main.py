@@ -36,6 +36,12 @@ import os
 import subprocess
 import platform
 
+try:
+    import pythoncom # type: ignore
+    from win32com.shell import shell # type: ignore
+except ImportError:
+    print("IMPORT ERROR: This function is not available on this platform.")
+
 def remove_extension(file_path):
     """
     Remove the extension from a file path.
@@ -75,17 +81,12 @@ def create_shortcut_windows(source_file, shortcut_location):
     :param source_file: The path to the original file.
     :param shortcut_location: The path where the shortcut should be created.
     """
-    try:
-        import pythoncom # type: ignore
-        from win32com.shell import shell # type: ignore
-        shortcut = pythoncom.CoCreateInstance(
-            shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
-        shortcut.SetPath(source_file)
-        shortcut.SetWorkingDirectory(os.path.dirname(source_file))
-        persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
-        persist_file.Save(shortcut_location, 0)
-    except ImportError:
-        print("IMPORT ERROR: This function is not available on this platform.")
+    shortcut = pythoncom.CoCreateInstance(
+        shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
+    shortcut.SetPath(source_file)
+    shortcut.SetWorkingDirectory(os.path.dirname(source_file))
+    persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
+    persist_file.Save(shortcut_location, 0)
 
 def create_shortcut(source_file, alias_location):
     """
