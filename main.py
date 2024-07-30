@@ -77,7 +77,6 @@ def create_shortcut_windows(source_file, shortcut_location):
     """
     import pythoncom
     from win32com.shell import shell
-    
     shortcut = pythoncom.CoCreateInstance(
         shell.CLSID_ShellLink, None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
     shortcut.SetPath(source_file)
@@ -131,8 +130,9 @@ def delete_files_with_same_basename(directory, base_name):
 
 class ImageTransfer():
     """
-    ImageTransfer is a class for managing the conversion of image files in a specified folder to shortcuts,
-    linking to their original files in another directory. It supports both Windows and macOS systems.
+    ImageTransfer is a class for managing the conversion of image files
+    in a specified folder to shortcuts, linking to their original files in another directory.
+    It supports both Windows and macOS systems.
 
     Attributes:
         - PATH: The absolute path to the working directory.
@@ -157,28 +157,33 @@ class ImageTransfer():
         """
         return os.path.isdir(self.PATH)
 
-    def convert_image_shortcuts(self, img_dir=os.getcwd(), type_priority:list=None):
+    def convert_image_shortcuts(self, img_dir=None, type_priority:list=None):
         """
-        Convert image files in the specified directory to shortcuts, prioritizing specified file types.
+        Convert image files in the specified directory to shortcuts,
+        prioritizing specified file types.
 
         Parameters:
-        - img_dir (str): The directory to scan for image files. Defaults to the current working directory.
-        - type_priority (list of str): List of image file extensions in order of priority. Defaults to ["NEF", "TIF", "TIFF", "JPG", "JPEG"].
+        - img_dir (str): The directory to scan for image files.
+          Defaults to the current working directory.
+        - type_priority (list of str): List of image file extensions in order of priority.
+          Defaults to ["NEF", "TIF", "TIFF", "JPG", "JPEG"].
 
         Returns:
         - bool: False if the target folder is not set or does not exist, True otherwise.
         """
         if type_priority is None:
             type_priority = ["NEF", "TIF", "TIFF", "JPG", "JPEG"]
+        if img_dir is None:
+            img_dir = os.getcwd()
         if not self.folder:
             return False
         if not img_dir:
             img_dir = self.PATH
 
         img_dir = os.path.abspath(img_dir)
-        scanned_folder = scan_folder(img_dir, recursive=True)    
+        scanned_folder = scan_folder(img_dir, recursive=True)
         priority_map = {ext: idx for idx, ext in enumerate(type_priority)}
-        processed_scanned_folder = {}     
+        processed_scanned_folder = {}
         for file in scanned_folder:
             ext = file.split('.')[-1].upper()
             if ext in priority_map:
@@ -187,7 +192,6 @@ class ImageTransfer():
                 processed_order = priority_map[processed_sc_bname.split('.')[-1].upper()]
                 if base_name not in processed_scanned_folder or priority_map[ext] < processed_order:
                     processed_scanned_folder[base_name] = file
-
         for file in scan_folder(self.folder, recursive=True):
             if file.endswith("DS_Store"):
                 continue
@@ -198,17 +202,14 @@ class ImageTransfer():
                 matching_file = processed_scanned_folder[processed_file]
                 ext = matching_file.split('.')[-1].upper()
                 matching_files = [matching_file]
-                
                 # Include .xmp file if it exists for .NEF files
                 if ext == 'NEF':
                     xmp_file = remove_extension(matching_file) + ".xmp"
                     if os.path.exists(xmp_file):
                         matching_files.append(xmp_file)
-                
                 print(f"Matching files found for {file}: {matching_files}")
-
                 # Delete existing files with the same base name
-                delete_files_with_same_basename(self.folder, processed_file)              
+                delete_files_with_same_basename(self.folder, processed_file)
                 # Create shortcuts for the new files
                 for shortcut_source in matching_files:
                     new_file_name = f"{processed_file}.{shortcut_source.split('.')[-1]}"
