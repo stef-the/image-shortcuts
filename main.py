@@ -1,3 +1,33 @@
+"""
+ImageTransfer is a class to manage the conversion of image files in a specified folder to shortcuts, linking to their 
+original files in another directory. It supports both Windows and macOS systems.
+
+Methods:
+    - __init__(path, folder): Initializes the ImageTransfer object with the specified path and folder.
+    - exists(): Checks if the specified path exists and is a directory.
+    - convert_image_shortcuts(img_dir, type_priority): Scans the specified directory for image files, finds corresponding
+      files in the reference directory based on priority, deletes existing files with the same base name, and creates 
+      shortcuts to the original files in the reference directory.
+
+Functions:
+    - remove_extension(file_path): Removes the extension from a file path.
+    - create_alias_macos(source_file, alias_location): Creates an alias to a file on macOS using AppleScript.
+    - create_shortcut_windows(source_file, shortcut_location): Creates a shortcut to a file on Windows using Python's 
+      win32com.shell.
+    - create_shortcut(source_file, alias_location): Detects the operating system and creates a shortcut or alias 
+      accordingly.
+    - scan_folder(folder, recursive): Scans a folder for files, with an option to scan subfolders recursively.
+    - delete_files_with_same_basename(directory, base_name): Deletes all files in a directory that have the same base 
+      name.
+
+Example usage:
+    input_folder = "./Images_(Copy)/"
+    reference_folder = "./Images/"
+    
+    cs0 = ImageTransfer(folder=input_folder)
+    print(cs0.exists())  # Checks if the input folder exists
+    cs0.convert_image_shortcuts(img_dir=reference_folder)  # Converts images to shortcuts
+"""
 import os
 import subprocess
 import platform
